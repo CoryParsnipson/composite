@@ -38,6 +38,20 @@ int main() {
    d.add(&e);
    d.add(&g);
 
+   std::cout << "== (shallow) iteration ====" << std::endl << "  ";
+   Test::iterator it;
+   for (it = a.begin(), i = 0; it != a.end() && i < max_iterations; ++it, ++i) {
+      std::cout << *(*it) << ' ';
+   }
+   std::cout << std::endl << std::endl;
+
+   std::cout << "== const (shallow) iteration ====" << std::endl << "  ";
+   Test::const_iterator c_it;
+   for (c_it = a.begin(), i = 0; c_it != a.end() && i < max_iterations; ++c_it, ++i) {
+      std::cout << *(*c_it) << ' ';
+   }
+   std::cout << std::endl << std::endl;
+
    std::cout << "== prefix iteration ====" << std::endl << "  ";
    Test::prefix_iterator pre_it;
    for (pre_it = a.begin(), i = 0; pre_it != a.end() && i < max_iterations; ++pre_it, ++i) {
@@ -59,10 +73,24 @@ int main() {
    }
    std::cout << std::endl << std::endl;
 
+   std::cout << "== const postfix iteration ====" << std::endl << "  ";
+   Test::const_postfix_iterator c_post_it;
+   for (c_post_it = a.begin(), i = 0; c_post_it != a.end() && i < max_iterations; ++c_post_it, ++i) {
+      std::cout << *(*c_post_it) << ' ';
+   }
+   std::cout << std::endl << std::endl;
+
    std::cout << "== breadth iteration ====" << std::endl << "  ";
    Test::breadth_iterator breadth_it;
    for (breadth_it = a.begin(), i = 0; breadth_it != a.end() && i < max_iterations; ++breadth_it, ++i) {
       std::cout << *(*breadth_it) << ' ';
+   }
+   std::cout << std::endl << std::endl;
+
+   std::cout << "== const breadth iteration ====" << std::endl << "  ";
+   Test::const_breadth_iterator c_breadth_it;
+   for (c_breadth_it = a.begin(), i = 0; c_breadth_it != a.end() && i < max_iterations; ++c_breadth_it, ++i) {
+      std::cout << *(*c_breadth_it) << ' ';
    }
    std::cout << std::endl << std::endl;
 

@@ -18,6 +18,7 @@
 // -----------------------------------------------------------------------------
 // forward declarations
 // -----------------------------------------------------------------------------
+class TraitsShallow;
 class TraitsPrefix;
 class TraitsPostfix;
 class TraitsBreadth;
@@ -45,8 +46,8 @@ template <class T>
 class Composite
 {
 public:
-   using iterator               = typename std::vector<T*>::iterator;
-   using const_iterator         = typename std::vector<T*>::const_iterator;
+   using iterator               = CompositeIterator<T, TraitsShallow>;
+   using const_iterator         = CompositeIterator<const T, TraitsShallow>;
 
    using prefix_iterator        = CompositeIterator<T, TraitsPrefix>;
    using const_prefix_iterator  = CompositeIterator<const T, TraitsPrefix>;
@@ -94,6 +95,40 @@ protected:
 // -----------------------------------------------------------------------------
 template <class T, class Traits>
 class CompositeIteratorTraits;
+
+template <class T>
+class CompositeIteratorTraits<T, TraitsShallow> {
+public:
+   // any initialization steps necessary
+   static void init(NodeList<T>& nodes, IndexList& indices) {
+      if (nodes.empty()) {
+         return;
+      }
+
+      T* node = nodes[0];
+      nodes.erase(nodes.begin());
+      
+      int num_nodes = node->get_num_children();
+      int i = 0;
+
+      while (i < num_nodes) {
+         nodes.push_back(node->get(i));
+         ++i;
+      }
+   }
+
+   // retrive current node in iteration
+   static T* get(NodeList<T>& nodes, IndexList& indices) {
+      return (nodes.empty() ? nullptr : nodes.front());
+   }
+
+   // increment the current node in the iteration
+   static void next(NodeList<T>& nodes, IndexList& indices) {
+      if (!nodes.empty()) {
+         nodes.erase(nodes.begin());
+      }
+   }
+};
 
 template <class T>
 class CompositeIteratorTraits<T, TraitsPrefix> {
@@ -233,6 +268,9 @@ class CompositeIterator
 {
 public:
    // NOTE: need to add a line for each type of trait
+   friend class CompositeIterator<T, TraitsShallow>;
+   friend class CompositeIterator<const T, TraitsShallow>;
+
    friend class CompositeIterator<T, TraitsPrefix>;
    friend class CompositeIterator<const T, TraitsPrefix>;
 
