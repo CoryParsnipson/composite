@@ -33,6 +33,63 @@ template <class T>
 using NodeList = std::vector<T*>;
 
 // -----------------------------------------------------------------------------
+// Composite abstract base
+//
+// This is an archetype specification for classes where instances may have
+// any number of children of the same inheritance family.
+//
+// Concrete implementations should only override methods under the "hooks"
+// section of the class definition.
+// -----------------------------------------------------------------------------
+template <class T>
+class Composite
+{
+public:
+   using iterator               = typename std::vector<T*>::iterator;
+   using const_iterator         = typename std::vector<T*>::const_iterator;
+
+   using prefix_iterator        = CompositeIterator<T, TraitsPrefix>;
+   using const_prefix_iterator  = CompositeIterator<const T, TraitsPrefix>;
+
+   using postfix_iterator       = CompositeIterator<T, TraitsPostfix>;
+   using const_postfix_iterator = CompositeIterator<const T, TraitsPostfix>;
+
+   using breadth_iterator       = CompositeIterator<T, TraitsBreadth>;
+   using const_breadth_iterator = CompositeIterator<const T, TraitsBreadth>;
+
+   Composite();
+   virtual ~Composite() = 0;
+
+   // client interface
+   void add(T* child);
+   T* get(int idx) const;
+   void remove(T* child);
+   void remove(int idx);
+
+   int get_num_children() const;
+
+   // iterator interface
+   virtual CompositeIterator<T, TraitsPrefix> begin();
+   virtual CompositeIterator<T, TraitsPrefix> end();
+
+protected:
+   std::vector<T*> children_;
+
+   // hooks for child interface
+   virtual void add_pre(T* child) {}
+   virtual void add_post(T* child) {}
+
+   virtual void get_pre(int idx) const {}
+   virtual void get_post(int idx) const {}
+
+   virtual void remove_pre(T* child) {}
+   virtual void remove_post(T* child) {}
+
+   virtual void remove_pre(int idx) {}
+   virtual void remove_post(int idx) {}
+};
+
+// -----------------------------------------------------------------------------
 // Composite iterator trait definitions
 // -----------------------------------------------------------------------------
 template <class T, class Traits>
@@ -162,58 +219,6 @@ public:
 };
 
 // -----------------------------------------------------------------------------
-// Composite abstract base
-//
-// This is an archetype specification for classes where instances may have
-// any number of children of the same inheritance family.
-//
-// Concrete implementations should only override methods under the "hooks"
-// section of the class definition.
-// -----------------------------------------------------------------------------
-template <class T>
-class Composite
-{
-public:
-   using iterator         = typename std::vector<T*>::iterator;
-   using const_iterator   = typename std::vector<T*>::const_iterator;
-
-   using prefix_iterator  = CompositeIterator<T, TraitsPrefix>;
-   using postfix_iterator = CompositeIterator<T, TraitsPostfix>;
-   using breadth_iterator = CompositeIterator<T, TraitsBreadth>;
-
-   Composite();
-   virtual ~Composite() = 0;
-
-   // client interface
-   void add(T* child);
-   T* get(int idx);
-   void remove(T* child);
-   void remove(int idx);
-
-   int get_num_children();
-
-   // iterator interface
-   virtual CompositeIterator<T, TraitsPrefix> begin();
-   virtual CompositeIterator<T, TraitsPrefix> end();
-
-protected:
-   std::vector<T*> children_;
-
-   // hooks for child interface
-   virtual void add_pre(T* child) {}
-   virtual void add_post(T* child) {}
-
-   virtual void get_pre(int idx) {}
-   virtual void get_post(int idx) {}
-
-   virtual void remove_pre(T* child) {}
-   virtual void remove_post(T* child) {}
-
-   virtual void remove_pre(int idx) {}
-   virtual void remove_post(int idx) {}
-};
-
-// -----------------------------------------------------------------------------
 // Composite iterator class
 //
 // This class implements a basic bi-direction standard library iterator for
@@ -229,8 +234,13 @@ class CompositeIterator
 public:
    // NOTE: need to add a line for each type of trait
    friend class CompositeIterator<T, TraitsPrefix>;
+   friend class CompositeIterator<const T, TraitsPrefix>;
+
    friend class CompositeIterator<T, TraitsPostfix>;
+   friend class CompositeIterator<const T, TraitsPostfix>;
+
    friend class CompositeIterator<T, TraitsBreadth>;
+   friend class CompositeIterator<const T, TraitsBreadth>;
 
    CompositeIterator() {
       CompositeIteratorTraits<T, Traits>::init(this->nodes_, this->indices_);
@@ -243,6 +253,14 @@ public:
       CompositeIteratorTraits<T, Traits>::init(this->nodes_, this->indices_);
    }
 
+   template <typename constT>
+   CompositeIterator(constT* itr) {
+      this->indices_.push_back(0);
+      this->nodes_.push_back(itr);
+      
+      CompositeIteratorTraits<constT, Traits>::init(this->nodes_, this->indices_);
+   }
+
    CompositeIterator(const CompositeIterator<T, Traits>& other)
    : indices_(other.indices_)
    , nodes_(other.nodes_)
@@ -252,10 +270,15 @@ public:
 
    // assignment operator overload
    // NOTE: needed to convert between CompositeIterators with different traits
-   CompositeIterator operator=(CompositeIterator<T, TraitsPrefix> other) {
+   template <typename constT>
+   CompositeIterator operator=(CompositeIterator<constT, TraitsPrefix> other) {
       // check for self assignment and skip if so
       if ((void*)this != (void*)&other) {
-         this->nodes_ = other.nodes_;
+         typename NodeList<constT>::const_iterator it;
+         for (it = other.nodes_.begin(); it != other.nodes_.end(); ++it) {
+            this->nodes_.push_back(*it);
+         }
+
          this->indices_ = other.indices_;
       }
 
@@ -277,16 +300,16 @@ public:
       return *this;
    }
 
-   template <class N>
-   bool operator!=(const CompositeIterator<T, N>& itr) {
+   template <typename constT, typename OtherTraits>
+   bool operator!=(const CompositeIterator<constT, OtherTraits>& itr) {
       bool this_empty = this->nodes_.empty();
       bool other_empty = itr.nodes_.empty();
 
       return (this_empty ^ other_empty) || (!this_empty && !other_empty && (this->nodes_.back() != itr.nodes_.back()));
    }
 
-   template <class N>
-   bool operator==(const CompositeIterator<T, N>& itr) {
+   template <typename constT, typename OtherTraits>
+   bool operator==(const CompositeIterator<constT, OtherTraits>& itr) {
       bool this_empty = this->nodes_.empty();
       bool other_empty = itr.nodes_.empty();
 
@@ -333,7 +356,7 @@ void Composite<T>::add(T* child) {
 }
 
 template <class T>
-T* Composite<T>::get(int idx) {
+T* Composite<T>::get(int idx) const {
    if (idx < 0 || idx >= this->get_num_children()) {
       return nullptr;
    }
@@ -370,7 +393,7 @@ void Composite<T>::remove(int idx) {
 }
 
 template <class T>
-int Composite<T>::get_num_children() {
+int Composite<T>::get_num_children() const {
    return this->children_.size();
 }
 

@@ -45,6 +45,13 @@ int main() {
    }
    std::cout << std::endl << std::endl;
 
+   std::cout << "== const prefix iteration ====" << std::endl << "  ";
+   Test::const_prefix_iterator c_pre_it;
+   for (c_pre_it = a.begin(), i = 0; c_pre_it != a.end() && i < max_iterations; ++c_pre_it, ++i) {
+      std::cout << *(*c_pre_it) << ' ';
+   }
+   std::cout << std::endl << std::endl;
+
    std::cout << "== postfix iteration ====" << std::endl << "  ";
    Test::postfix_iterator post_it;
    for (post_it = a.begin(), i = 0; post_it != a.end() && i < max_iterations; ++post_it, ++i) {
