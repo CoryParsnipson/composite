@@ -23,7 +23,7 @@ class TraitsPrefix;
 class TraitsPostfix;
 class TraitsBreadth;
 
-template <class T, class Traits> class CompositeIterator;
+template <class T, bool is_reverse, class Traits> class CompositeIterator;
 
 // -----------------------------------------------------------------------------
 // aliases
@@ -46,17 +46,25 @@ template <class T>
 class Composite
 {
 public:
-   using iterator               = CompositeIterator<T, TraitsShallow>;
-   using const_iterator         = CompositeIterator<const T, TraitsShallow>;
+   using iterator                       = CompositeIterator<T, false, TraitsShallow>;
+   using const_iterator                 = CompositeIterator<const T, false, TraitsShallow>;
+   using reverse_iterator               = CompositeIterator<T, true, TraitsShallow>;
+   using const_reverse_iterator         = CompositeIterator<const T, true, TraitsShallow>;
 
-   using prefix_iterator        = CompositeIterator<T, TraitsPrefix>;
-   using const_prefix_iterator  = CompositeIterator<const T, TraitsPrefix>;
+   using prefix_iterator                = CompositeIterator<T, false, TraitsPrefix>;
+   using const_prefix_iterator          = CompositeIterator<const T, false, TraitsPrefix>;
+   using reverse_prefix_iterator        = CompositeIterator<T, true, TraitsPrefix>;
+   using const_reverse_prefix_iterator  = CompositeIterator<const T, true, TraitsPrefix>;
 
-   using postfix_iterator       = CompositeIterator<T, TraitsPostfix>;
-   using const_postfix_iterator = CompositeIterator<const T, TraitsPostfix>;
+   using postfix_iterator               = CompositeIterator<T, false, TraitsPostfix>;
+   using const_postfix_iterator         = CompositeIterator<const T, false, TraitsPostfix>;
+   using reverse_postfix_iterator       = CompositeIterator<T, true, TraitsPostfix>;
+   using const_reverse_postfix_iterator = CompositeIterator<const T, true, TraitsPostfix>;
 
-   using breadth_iterator       = CompositeIterator<T, TraitsBreadth>;
-   using const_breadth_iterator = CompositeIterator<const T, TraitsBreadth>;
+   using breadth_iterator               = CompositeIterator<T, false, TraitsBreadth>;
+   using const_breadth_iterator         = CompositeIterator<const T, false, TraitsBreadth>;
+   using reverse_breadth_iterator       = CompositeIterator<T, true, TraitsBreadth>;
+   using const_reverse_breadth_iterator = CompositeIterator<const T, true, TraitsBreadth>;
 
    Composite();
    virtual ~Composite() = 0;
@@ -70,8 +78,11 @@ public:
    int get_num_children() const;
 
    // iterator interface
-   virtual CompositeIterator<T, TraitsPrefix> begin();
-   virtual CompositeIterator<T, TraitsPrefix> end();
+   virtual CompositeIterator<T, false, TraitsPrefix> begin();
+   virtual CompositeIterator<T, false, TraitsPrefix> end();
+
+   virtual CompositeIterator<T, true, TraitsPrefix> rbegin();
+   virtual CompositeIterator<T, true, TraitsPrefix> rend();
 
 protected:
    std::vector<T*> children_;
@@ -93,11 +104,11 @@ protected:
 // -----------------------------------------------------------------------------
 // Composite iterator trait definitions
 // -----------------------------------------------------------------------------
-template <class T, class Traits>
+template <class T, bool is_reverse, class Traits>
 class CompositeIteratorTraits;
 
-template <class T>
-class CompositeIteratorTraits<T, TraitsShallow> {
+template <class T, bool is_reverse>
+class CompositeIteratorTraits<T, is_reverse, TraitsShallow> {
 public:
    // any initialization steps necessary
    static void init(NodeList<T>& nodes, IndexList& indices) {
@@ -112,7 +123,7 @@ public:
       int i = 0;
 
       while (i < num_nodes) {
-         nodes.push_back(node->get(i));
+         nodes.push_back(node->get(is_reverse ? num_nodes - 1 - i : i));
          ++i;
       }
    }
@@ -130,8 +141,8 @@ public:
    }
 };
 
-template <class T>
-class CompositeIteratorTraits<T, TraitsPrefix> {
+template <class T, bool is_reverse>
+class CompositeIteratorTraits<T, is_reverse, TraitsPrefix> {
 public:
    // any initialization steps necessary
    static void init(NodeList<T>& nodes, IndexList& indices) {
@@ -147,7 +158,9 @@ public:
    static void next(NodeList<T>& nodes, IndexList& indices) {
       // if the current node we are on still has unvisited children, descend to next child
       if (!nodes.empty() && indices.back() < nodes.back()->get_num_children()) {
-         nodes.push_back(nodes.back()->get(indices.back()));
+         int next_idx = is_reverse ? nodes.back()->get_num_children() - 1 - indices.back() : indices.back();
+
+         nodes.push_back(nodes.back()->get(next_idx));
          indices.push_back(0);
          return;
       }
@@ -162,7 +175,9 @@ public:
          // do the if statement from above here
          // NOTE: indices should be the same length as nodes
          if (!nodes.empty() && ++indices.back() < nodes.back()->get_num_children()) {
-            nodes.push_back(nodes.back()->get(indices.back()));
+            int next_idx = is_reverse ? nodes.back()->get_num_children() - 1 - indices.back() : indices.back();
+
+            nodes.push_back(nodes.back()->get(next_idx));
             indices.push_back(0);
             break;
          }
@@ -170,8 +185,8 @@ public:
    }
 };
 
-template <class T>
-class CompositeIteratorTraits<T, TraitsPostfix> {
+template <class T, bool is_reverse>
+class CompositeIteratorTraits<T, is_reverse, TraitsPostfix> {
 public:
    // any initialization steps necessary
    static void init(NodeList<T>& nodes, IndexList& indices) {
@@ -181,7 +196,9 @@ public:
    
       // move to the first leaf node
       while (indices.back() < nodes.back()->get_num_children()) {
-         nodes.push_back(nodes.back()->get(indices.back()));
+         int next_idx = is_reverse ? nodes.back()->get_num_children() - 1 - indices.back() : indices.back();
+
+         nodes.push_back(nodes.back()->get(next_idx));
          indices.push_back(0);
       }
    }
@@ -199,7 +216,9 @@ public:
 
       if (indices.back() < nodes.back()->get_num_children()) {
          // we still have children to traverse
-         nodes.push_back(nodes.back()->get(indices.back()));
+         int next_idx = is_reverse ? nodes.back()->get_num_children() - 1 - indices.back() : indices.back();
+
+         nodes.push_back(nodes.back()->get(next_idx));
          indices.push_back(0);
 
          next(nodes, indices);
@@ -217,15 +236,17 @@ public:
 
          // and continue traverse until we hit the next leaf node
          while (indices.back() < nodes.back()->get_num_children()) {
-            nodes.push_back(nodes.back()->get(indices.back()));
+            int next_idx = is_reverse ? nodes.back()->get_num_children() - 1 - indices.back() : indices.back();
+
+            nodes.push_back(nodes.back()->get(next_idx));
             indices.push_back(0);
          }
       }
    }
 };
 
-template <class T>
-class CompositeIteratorTraits<T, TraitsBreadth> {
+template <class T, bool is_reverse>
+class CompositeIteratorTraits<T, is_reverse, TraitsBreadth> {
 public:
    // any initialization steps necessary
    static void init(NodeList<T>& nodes, IndexList& indices) {
@@ -245,7 +266,7 @@ public:
 
       // push all children onto list
       for (int i = 0; i < nodes.front()->get_num_children(); ++i) {
-         nodes.push_back(nodes.front()->get(i));
+         nodes.push_back(nodes.front()->get(is_reverse ? nodes.front()->get_num_children() - 1 - i : i));
       }
 
       // pop the front of the nodelist (it was the old current node)
@@ -262,33 +283,41 @@ public:
 // different iterator types (prefix traversal, postfix traversal, etc) to be
 // used with one begin() and end() method signature like the stl containers.
 // -----------------------------------------------------------------------------
-template <class T, typename Traits = TraitsPrefix>
+template <class T, bool is_reverse = false, typename Traits = TraitsPrefix>
 class CompositeIterator
 : public std::iterator<std::bidirectional_iterator_tag, T>
 {
 public:
    // NOTE: need to add a line for each type of trait
-   friend class CompositeIterator<T, TraitsShallow>;
-   friend class CompositeIterator<const T, TraitsShallow>;
+   friend class CompositeIterator<T, false, TraitsShallow>;
+   friend class CompositeIterator<const T, false, TraitsShallow>;
+   friend class CompositeIterator<T, true, TraitsShallow>;
+   friend class CompositeIterator<const T, true, TraitsShallow>;
 
-   friend class CompositeIterator<T, TraitsPrefix>;
-   friend class CompositeIterator<const T, TraitsPrefix>;
+   friend class CompositeIterator<T, false, TraitsPrefix>;
+   friend class CompositeIterator<const T, false, TraitsPrefix>;
+   friend class CompositeIterator<T, true, TraitsPrefix>;
+   friend class CompositeIterator<const T, true, TraitsPrefix>;
 
-   friend class CompositeIterator<T, TraitsPostfix>;
-   friend class CompositeIterator<const T, TraitsPostfix>;
+   friend class CompositeIterator<T, false, TraitsPostfix>;
+   friend class CompositeIterator<const T, false, TraitsPostfix>;
+   friend class CompositeIterator<T, true, TraitsPostfix>;
+   friend class CompositeIterator<const T, true, TraitsPostfix>;
 
-   friend class CompositeIterator<T, TraitsBreadth>;
-   friend class CompositeIterator<const T, TraitsBreadth>;
+   friend class CompositeIterator<T, false, TraitsBreadth>;
+   friend class CompositeIterator<const T, false, TraitsBreadth>;
+   friend class CompositeIterator<T, true, TraitsBreadth>;
+   friend class CompositeIterator<const T, true, TraitsBreadth>;
 
    CompositeIterator() {
-      CompositeIteratorTraits<T, Traits>::init(this->nodes_, this->indices_);
+      CompositeIteratorTraits<T, is_reverse, Traits>::init(this->nodes_, this->indices_);
    }
 
    CompositeIterator(T* itr) {
       this->indices_.push_back(0);
       this->nodes_.push_back(itr);
       
-      CompositeIteratorTraits<T, Traits>::init(this->nodes_, this->indices_);
+      CompositeIteratorTraits<T, is_reverse, Traits>::init(this->nodes_, this->indices_);
    }
 
    template <typename constT>
@@ -296,20 +325,20 @@ public:
       this->indices_.push_back(0);
       this->nodes_.push_back(itr);
       
-      CompositeIteratorTraits<constT, Traits>::init(this->nodes_, this->indices_);
+      CompositeIteratorTraits<constT, is_reverse, Traits>::init(this->nodes_, this->indices_);
    }
 
-   CompositeIterator(const CompositeIterator<T, Traits>& other)
+   CompositeIterator(const CompositeIterator<T, is_reverse, Traits>& other)
    : indices_(other.indices_)
    , nodes_(other.nodes_)
    {
-      CompositeIteratorTraits<T, Traits>::init(this->nodes_, this->indices_);
+      CompositeIteratorTraits<T, is_reverse, Traits>::init(this->nodes_, this->indices_);
    }
 
    // assignment operator overload
    // NOTE: needed to convert between CompositeIterators with different traits
    template <typename constT>
-   CompositeIterator operator=(CompositeIterator<constT, TraitsPrefix> other) {
+   CompositeIterator operator=(CompositeIterator<constT, is_reverse, TraitsPrefix> other) {
       // check for self assignment and skip if so
       if ((void*)this != (void*)&other) {
          typename NodeList<constT>::const_iterator it;
@@ -320,26 +349,26 @@ public:
          this->indices_ = other.indices_;
       }
 
-      CompositeIteratorTraits<T, Traits>::init(this->nodes_, this->indices_);
+      CompositeIteratorTraits<T, is_reverse, Traits>::init(this->nodes_, this->indices_);
       return *this;
    }
 
    // ++operator overload
    virtual CompositeIterator& operator++() {
-      CompositeIteratorTraits<T, Traits>::next(this->nodes_, this->indices_);
+      CompositeIteratorTraits<T, is_reverse, Traits>::next(this->nodes_, this->indices_);
       return *this;
    }
 
    // operator++ overload
    virtual CompositeIterator operator++(int) {
-      CompositeIterator<T, Traits> tmp(*this);
+      CompositeIterator<T, is_reverse, Traits> tmp(*this);
 
       ++(*this);
       return *this;
    }
 
    template <typename constT, typename OtherTraits>
-   bool operator!=(const CompositeIterator<constT, OtherTraits>& itr) {
+   bool operator!=(const CompositeIterator<constT, is_reverse, OtherTraits>& itr) {
       bool this_empty = this->nodes_.empty();
       bool other_empty = itr.nodes_.empty();
 
@@ -347,7 +376,7 @@ public:
    }
 
    template <typename constT, typename OtherTraits>
-   bool operator==(const CompositeIterator<constT, OtherTraits>& itr) {
+   bool operator==(const CompositeIterator<constT, is_reverse, OtherTraits>& itr) {
       bool this_empty = this->nodes_.empty();
       bool other_empty = itr.nodes_.empty();
 
@@ -355,11 +384,11 @@ public:
    }
 
    virtual T* operator*() {
-      return (this->nodes_.empty() ? nullptr : CompositeIteratorTraits<T, Traits>::get(this->nodes_, this->indices_));
+      return (this->nodes_.empty() ? nullptr : CompositeIteratorTraits<T, is_reverse, Traits>::get(this->nodes_, this->indices_));
    }
 
    virtual T* operator->() {
-      return (this->nodes_.empty() ? nullptr : CompositeIteratorTraits<T, Traits>::get(this->nodes_, this->indices_));
+      return (this->nodes_.empty() ? nullptr : CompositeIteratorTraits<T, is_reverse, Traits>::get(this->nodes_, this->indices_));
    }
 
 protected:
@@ -436,14 +465,26 @@ int Composite<T>::get_num_children() const {
 }
 
 template <class T>
-CompositeIterator<T, TraitsPrefix> Composite<T>::begin() {
-   CompositeIterator<T, TraitsPrefix> tmp(static_cast<T*>(this));
+CompositeIterator<T, false, TraitsPrefix> Composite<T>::begin() {
+   CompositeIterator<T, false, TraitsPrefix> tmp(static_cast<T*>(this));
    return tmp;
 }
 
 template <class T>
-CompositeIterator<T, TraitsPrefix> Composite<T>::end() {
-   CompositeIterator<T, TraitsPrefix> tmp;
+CompositeIterator<T, false, TraitsPrefix> Composite<T>::end() {
+   CompositeIterator<T, false, TraitsPrefix> tmp;
+   return tmp;
+}
+
+template <class T>
+CompositeIterator<T, true, TraitsPrefix> Composite<T>::rbegin() {
+   CompositeIterator<T, true, TraitsPrefix> tmp(static_cast<T*>(this));
+   return tmp;
+}
+
+template <class T>
+CompositeIterator<T, true, TraitsPrefix> Composite<T>::rend() {
+   CompositeIterator<T, true, TraitsPrefix> tmp;
    return tmp;
 }
 
