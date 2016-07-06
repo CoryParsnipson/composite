@@ -1,3 +1,13 @@
+// -----------------------------------------------------------------------------
+// Composite.h
+//
+// This is a generic implementation of the composite OOP design pattern in C++.
+// Also in this file are a few basic iterators (prefix, postfix, breadth)
+// for traversing a composite structure in a tree-like manner.
+//
+// Cory Parsnipson
+// -----------------------------------------------------------------------------
+
 #ifndef COMPOSITE_H
 #define COMPOSITE_H
 
@@ -160,7 +170,7 @@ public:
 // Concrete implementations should only override methods under the "hooks"
 // section of the class definition.
 // -----------------------------------------------------------------------------
-template <class T, typename Traits = TraitsPrefix>
+template <class T>
 class Composite
 {
 public:
@@ -183,8 +193,8 @@ public:
    int get_num_children();
 
    // iterator interface
-   virtual CompositeIterator<T, Traits> begin();
-   virtual CompositeIterator<T, Traits> end();
+   virtual CompositeIterator<T, TraitsPrefix> begin();
+   virtual CompositeIterator<T, TraitsPrefix> end();
 
 protected:
    std::vector<T*> children_;
@@ -299,20 +309,20 @@ protected:
 // --------------------------------------------------------------------------
 // Composite constructor implementations
 // --------------------------------------------------------------------------
-template <class T, typename Traits>
-Composite<T, Traits>::Composite() {
+template <class T>
+Composite<T>::Composite() {
 }
 
-template <class T, typename Traits>
-Composite<T, Traits>::~Composite() {
+template <class T>
+Composite<T>::~Composite() {
    this->children_.clear();
 }
 
 // --------------------------------------------------------------------------
 // Composite method implementations
 // --------------------------------------------------------------------------
-template <class T, typename Traits>
-void Composite<T, Traits>::add(T* child) {
+template <class T>
+void Composite<T>::add(T* child) {
    if (!child) {
       return;
    }
@@ -322,8 +332,8 @@ void Composite<T, Traits>::add(T* child) {
    this->add_post(child);
 }
 
-template <class T, typename Traits>
-T* Composite<T, Traits>::get(int idx) {
+template <class T>
+T* Composite<T>::get(int idx) {
    if (idx < 0 || idx >= this->get_num_children()) {
       return nullptr;
    }
@@ -333,8 +343,8 @@ T* Composite<T, Traits>::get(int idx) {
    this->get_post(idx);
 }
 
-template <class T, typename Traits>
-void Composite<T, Traits>::remove(T* child) {
+template <class T>
+void Composite<T>::remove(T* child) {
    this->remove_pre(child);
 
    typename std::vector<T*>::iterator it;
@@ -348,8 +358,8 @@ void Composite<T, Traits>::remove(T* child) {
    this->remove_post(child);
 }
 
-template <class T, typename Traits>
-void Composite<T, Traits>::remove(int idx) {
+template <class T>
+void Composite<T>::remove(int idx) {
    if (idx < 0 || idx >= this->get_num_children()) {
       return;
    }
@@ -359,20 +369,20 @@ void Composite<T, Traits>::remove(int idx) {
    this->remove_post(idx);
 }
 
-template <class T, typename Traits>
-int Composite<T, Traits>::get_num_children() {
+template <class T>
+int Composite<T>::get_num_children() {
    return this->children_.size();
 }
 
-template <class T, typename Traits>
-CompositeIterator<T, Traits> Composite<T, Traits>::begin() {
-   CompositeIterator<T, Traits> tmp(static_cast<T*>(this));
+template <class T>
+CompositeIterator<T, TraitsPrefix> Composite<T>::begin() {
+   CompositeIterator<T, TraitsPrefix> tmp(static_cast<T*>(this));
    return tmp;
 }
 
-template <class T, typename Traits>
-CompositeIterator<T, Traits> Composite<T, Traits>::end() {
-   CompositeIterator<T, Traits> tmp;
+template <class T>
+CompositeIterator<T, TraitsPrefix> Composite<T>::end() {
+   CompositeIterator<T, TraitsPrefix> tmp;
    return tmp;
 }
 
