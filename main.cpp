@@ -16,6 +16,22 @@ std::ostream& operator<<(std::ostream& os, const Test& t) {
    return os;
 }
 
+class NodeWithParentPointer : public Composite<NodeWithParentPointer, true>
+{
+public:
+   NodeWithParentPointer(std::string id) : Composite<NodeWithParentPointer, true>(), id(std::move(id)) {}
+
+   friend std::ostream& operator<<(std::ostream& os, const NodeWithParentPointer& n);
+
+protected:
+   std::string id;
+};
+
+std::ostream& operator<<(std::ostream& os, const NodeWithParentPointer& n) {
+   os << n.id;
+   return os;
+}
+
 int main() {
    int i = 0;
    int max_iterations = 100; // failsafe max iterations in case of infinite loops
@@ -147,6 +163,30 @@ int main() {
    Test::const_reverse_breadth_iterator c_r_breadth_it;
    for (c_r_breadth_it = a.rbegin(), i = 0; c_r_breadth_it != a.rend() && i < max_iterations; ++c_r_breadth_it, ++i) {
       std::cout << *(*c_r_breadth_it) << ' ';
+   }
+   std::cout << std::endl << std::endl;
+
+   std::cout << std::endl << "=========================================" << std::endl;
+
+   NodeWithParentPointer bulbasaur("Bulbasaur");
+   NodeWithParentPointer ivysaur("Ivysaur");
+   NodeWithParentPointer venasaur("Venusaur");
+   
+   bulbasaur.add(&ivysaur);
+   ivysaur.add(&venasaur);
+
+   std::cout << "== composite with parent pointers ====" << std::endl << "  ";
+   NodeWithParentPointer::const_prefix_iterator nit;
+   for (nit = bulbasaur.begin(), i = 0; nit != bulbasaur.end() && i < max_iterations; ++nit, ++i) {
+      std::cout << *(*nit) << ' ';
+   }
+   std::cout << std::endl << std::endl;
+
+   bulbasaur.remove(&ivysaur);
+
+   std::cout << "== removed child node with parent pointer ====" << std::endl << "  ";
+   for (nit = bulbasaur.begin(), i = 0; nit != bulbasaur.end() && i < max_iterations; ++nit, ++i) {
+      std::cout << *(*nit) << ' ';
    }
    std::cout << std::endl << std::endl;
 
