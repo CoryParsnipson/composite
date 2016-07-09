@@ -100,8 +100,14 @@ public:
    virtual CompositeIterator<T, false, TraitsPrefix> begin();
    virtual CompositeIterator<T, false, TraitsPrefix> end();
 
+   virtual CompositeIterator<const T, false, TraitsPrefix> begin() const;
+   virtual CompositeIterator<const T, false, TraitsPrefix> end() const;
+
    virtual CompositeIterator<T, true, TraitsPrefix> rbegin();
    virtual CompositeIterator<T, true, TraitsPrefix> rend();
+
+   virtual CompositeIterator<const T, true, TraitsPrefix> rbegin() const;
+   virtual CompositeIterator<const T, true, TraitsPrefix> rend() const;
 
 protected:
    void parent(T* parent);
@@ -527,6 +533,18 @@ CompositeIterator<T, false, TraitsPrefix> Composite<T, hasParentPointer>::end() 
 }
 
 template <class T, bool hasParentPointer>
+CompositeIterator<const T, false, TraitsPrefix> Composite<T, hasParentPointer>::begin() const {
+   CompositeIterator<const T, false, TraitsPrefix> tmp(static_cast<const T*>(this));
+   return tmp;
+}
+
+template <class T, bool hasParentPointer>
+CompositeIterator<const T, false, TraitsPrefix> Composite<T, hasParentPointer>::end() const {
+   CompositeIterator<const T, false, TraitsPrefix> tmp;
+   return tmp;
+}
+
+template <class T, bool hasParentPointer>
 CompositeIterator<T, true, TraitsPrefix> Composite<T, hasParentPointer>::rbegin() {
    CompositeIterator<T, true, TraitsPrefix> tmp(static_cast<T*>(this));
    return tmp;
@@ -535,6 +553,18 @@ CompositeIterator<T, true, TraitsPrefix> Composite<T, hasParentPointer>::rbegin(
 template <class T, bool hasParentPointer>
 CompositeIterator<T, true, TraitsPrefix> Composite<T, hasParentPointer>::rend() {
    CompositeIterator<T, true, TraitsPrefix> tmp;
+   return tmp;
+}
+
+template <class T, bool hasParentPointer>
+CompositeIterator<const T, true, TraitsPrefix> Composite<T, hasParentPointer>::rbegin() const {
+   CompositeIterator<const T, true, TraitsPrefix> tmp(static_cast<const T*>(this));
+   return tmp;
+}
+
+template <class T, bool hasParentPointer>
+CompositeIterator<const T, true, TraitsPrefix> Composite<T, hasParentPointer>::rend() const {
+   CompositeIterator<const T, true, TraitsPrefix> tmp;
    return tmp;
 }
 
