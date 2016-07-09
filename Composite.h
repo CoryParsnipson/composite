@@ -71,6 +71,7 @@ public:
 
    // client interface
    void add(T* child);
+   void insert(int idx, T* child);
 
    T* child(int idx) const;
    int num_children() const;
@@ -83,6 +84,9 @@ public:
    // hooks for child interface
    virtual void add_pre(T* child) {}
    virtual void add_post(T* child) {}
+
+   virtual void insert_pre(int idx, T* child) {}
+   virtual void insert_post(int idx, T* child) {}
 
    virtual void child_pre(int idx) const {}
    virtual void child_post(int idx) const {}
@@ -448,6 +452,29 @@ void Composite<T, hasParentPointer>::add(T* child) {
    }
 
    this->add_post(child);
+}
+
+template <class T, bool hasParentPointer>
+void Composite<T, hasParentPointer>::insert(int idx, T* child) {
+   typename std::vector<T*>::const_iterator it;
+
+   if (idx <= 0) {
+      it = this->children_.begin();
+   } else if (idx >= (signed int)this->children_.size()) {
+      it = this->children_.end();
+   } else {
+      it = this->children_.begin() + idx;
+   }
+
+   this->insert_pre(idx, child);
+   this->children_.insert(it, child);
+
+   // update parent pointer if necessary
+   if (hasParentPointer) {
+      child->parent(static_cast<T*>(this));
+   }
+
+   this->insert_post(idx, child);
 }
 
 template <class T, bool hasParentPointer>

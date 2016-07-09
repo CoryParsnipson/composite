@@ -45,14 +45,14 @@ int main() {
    Test g("StevenStills");
 
    a.add(&b);
-   a.add(&c);
+   a.insert(1, &c); // test insert method
 
    b.add(&d);
    
    c.add(&f);
 
-   d.add(&e);
    d.add(&g);
+   d.insert(0, &e); // test insert method
 
    std::cout << "== (shallow) iteration ====" << std::endl << "  ";
    Test::iterator it;
@@ -166,14 +166,14 @@ int main() {
    }
    std::cout << std::endl << std::endl;
 
-   std::cout << std::endl << "=========================================" << std::endl;
+   std::cout << "=========================================" << std::endl << std::endl;
 
    NodeWithParentPointer bulbasaur("Bulbasaur");
    NodeWithParentPointer ivysaur("Ivysaur");
-   NodeWithParentPointer venasaur("Venusaur");
+   NodeWithParentPointer venusaur("Venusaur");
    
    bulbasaur.add(&ivysaur);
-   ivysaur.add(&venasaur);
+   ivysaur.add(&venusaur);
 
    std::cout << "== composite with parent pointers ====" << std::endl << "  ";
    NodeWithParentPointer::const_prefix_iterator nit;
