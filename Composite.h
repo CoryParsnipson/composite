@@ -362,6 +362,8 @@ public:
    CompositeIterator operator=(CompositeIterator<constT, iterateInReverse, TraitsPrefix> other) {
       // check for self assignment and skip if so
       if ((void*)this != (void*)&other) {
+         this->nodes_.reserve(other.nodes_.size());
+
          typename NodeList<constT>::const_iterator it;
          for (it = other.nodes_.begin(); it != other.nodes_.end(); ++it) {
             this->nodes_.push_back(*it);
